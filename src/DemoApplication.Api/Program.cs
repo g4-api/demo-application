@@ -7,6 +7,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
+builder.Services.AddPersistence(builder.Configuration, builder.Environment.ContentRootPath);
 builder.Services.AddSingleton<IStartupCheck, StartupCheck>();
 builder.Services.AddHostedService<StartupValidationHostedService>();
 
