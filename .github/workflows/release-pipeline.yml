@@ -1,0 +1,3 @@
+# Placeholder for the release pipeline.
+# Triggers and jobs will be added when release automation is defined.
+name: Release Pipeline
