@@ -16,8 +16,8 @@ Dependencies point inward: API references Application and Infrastructure; Infras
 From the repository root on Windows, Linux, or macOS:
 
 ```bash
-dotnet restore DemoApplication.slnx
-dotnet run --project DemoApplication.Api
+dotnet restore src/DemoApplication.slnx
+dotnet run --project src/DemoApplication.Api
 ```
 
 The API listens on the URL printed by the host. Verify startup with `GET /health` and `GET /api/status`.
