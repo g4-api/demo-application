@@ -1,23 +1,51 @@
+using Asp.Versioning;
+
+using DemoApplication.Api.Contracts;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 
-namespace DemoApplication.Api.Controllers;
+using Swashbuckle.AspNetCore.Annotations;
 
-/// <summary>Exposes the API status contract used by smoke checks.</summary>
-[ApiController]
-[Route("api/status")]
-public sealed class StatusController : ControllerBase
+using System.Net.Mime;
+
+namespace DemoApplication.Api.Controllers
 {
-    /// <summary>Returns a stable response envelope for a running API.</summary>
-    [HttpGet]
-    public ActionResult<ApiResponse<object>> GetStatus()
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [Produces(MediaTypeNames.Application.Json)]
+    [SwaggerTag(description: "Reports whether an API host is running. Used by deployment smoke checks and uptime probes.")]
+    public sealed class StatusController : ControllerBase
     {
-        return Ok(ApiResponse<object>.Success(new { status = "ok" }));
-    }
-}
+        [HttpGet]
+        #region *** Open API Documentation ***
+        [SwaggerOperation(
+            summary: "Get API status",
+            description: "Returns the shared success envelope with a coarse health word and the API version that served the request.")]
+        [SwaggerResponse(
+            statusCode: StatusCodes.Status200OK,
+            description: "The API host is running and able to serve requests.",
+            type: typeof(ApiResponse<StatusReport>),
+            contentTypes: MediaTypeNames.Application.Json)]
+        #endregion
+        public ActionResult<ApiResponse<StatusReport>> GetStatus()
+        {
+            // Read the version segment that routing matched so the payload echoes the caller's contract, not a constant.
+            var routedVersion = HttpContext.GetRouteValue("version") as string;
+            var versionLabel = string.IsNullOrWhiteSpace(routedVersion)
+                ? "v1"
+                : $"v{routedVersion}";
 
-/// <summary>Represents a consistent API response envelope.</summary>
-public sealed record ApiResponse<T>(bool Succeeded, T? Data, IReadOnlyCollection<string> Errors)
-{
-    /// <summary>Creates a successful response.</summary>
-    public static ApiResponse<T> Success(T data) => new(true, data, Array.Empty<string>());
+            // Wrap the fixed status word in the shared envelope so smoke checks read one response shape everywhere.
+            var report = new StatusReport
+            {
+                Status = "ok",
+                ApiVersion = versionLabel
+            };
+
+            return Ok(ApiResponse<StatusReport>.Success(report));
+        }
+    }
 }
